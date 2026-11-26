@@ -50,13 +50,6 @@ if not GEMINI_API_KEY:
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-MODEL_NAME = "gemini-3.8-flash"
-FALLBACK_MODELS = [
-    "gemini-3.8-flash",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash"
-]
-
 # =====================================================
 # 4. CONSTANTS, CATALOGS & VERIFIED SOURCES
 # =====================================================
@@ -120,106 +113,110 @@ VERIFIED_SOURCES = [
     {"name": "Badan Pemeriksa Keuangan RI (BPK)", "url": "https://www.bpk.go.id/"},
     {"name": "JDIH Kemendagri (Keuangan Desa & Daerah)", "url": "https://jdih.kemendagri.go.id/"},
     {"name": "JDIH LKPP (Pengadaan Barang/Jasa)", "url": "https://jdih.lkpp.go.id/"},
-    {"name": "IPSASB (International Public Sector Accounting Standards)", "url": "https://www.ipsasb.org/"},
+    {"name": "IPSASB (Public Sector Accounting)", "url": "https://www.ipsasb.org/"},
     {"name": "Bank Indonesia (Kebijakan & Fintech)", "url": "https://www.bi.go.id/"}
 ]
 
 MATERI_DETAILS = {
     "Pengantar Akuntansi 1": {
-        "ringkasan": "Persamaan dasar akuntansi, aturan debit-kredit, siklus akuntansi perusahaan jasa & dagang, jurnal umum, buku besar, neraca saldo, jurnal penyesuaian, hingga laporan keuangan dasar.",
-        "poin_kunci": "Aset = Liabilitas + Ekuitas, basis akrual vs kas, jurnal penyesuaian, dan kertas kerja.",
-        "contoh": "Membeli peralatan kantor secara tunai menambah Aset (Peralatan) dan mengurangi Aset (Kas) dengan jumlah yang sama.",
-        "link": "https://web.iai.id/"
+        "ringkasan": "Persamaan dasar akuntansi, aturan debit-kredit, siklus akuntansi perusahaan jasa & dagang, jurnal umum, buku besar, neraca saldo, ayat jurnal penyesuaian, hingga penyusunan laporan keuangan dasar.",
+        "poin_kunci": "Aset = Liabilitas + Ekuitas, basis akrual vs kas, jurnal penyesuaian (akrual & deferal), dan kertas kerja.",
+        "contoh": "Membeli peralatan kantor tunai menambah Aset (Peralatan) dan mengurangi Aset (Kas) dengan jumlah yang sama."
     },
     "Pengantar Akuntansi 2": {
-        "ringkasan": "Jurnal khusus, sistem pencatatan persediaan periodik & perpetual, metode FIFO/rata-rata, kas kecil, piutang tak tertagih, aset tetap, dan jurnal penutup.",
+        "ringkasan": "Jurnal khusus, sistem pencatatan persediaan periodik & perpetual, metode penilaian persediaan (FIFO/rata-rata), kas kecil, piutang tak tertagih, aset tetap, dan jurnal penutup.",
         "poin_kunci": "FIFO vs rata-rata tertimbang, penyusutan aset tetap, cadangan kerugian piutang, dan penutupan akun nominal.",
-        "contoh": "Menjual barang dagang secara kredit mencatat Piutang Usaha (Debit) dan Penjualan (Kredit).",
-        "link": "https://www.ifrs.org/"
+        "contoh": "Menjual barang dagang secara kredit mencatat Piutang Usaha di debit dan Penjualan di kredit."
     },
     "Akuntansi Keuangan Menengah": {
-        "ringkasan": "Pengakuan, pengukuran, penyajian, dan pengungkapan pos laporan keuangan: kas, piutang, persediaan, aset tetap, aset tak berwujud, liabilitas jangka panjang, dan ekuitas.",
-        "poin_kunci": "Biaya perolehan vs nilai realisasi neto/nilai wajar, penurunan nilai (impairment), obligasi, dan ekuitas.",
-        "contoh": "Mengukur persediaan pada nilai yang lebih rendah antara biaya perolehan dan nilai realisasi neto.",
-        "link": "https://web.iai.id/"
+        "ringkasan": "Pengakuan, pengukuran, penyajian, dan pengungkapan pos laporan keuangan utama: kas & setara kas, piutang, persediaan, aset tetap, aset tak berwujud, liabilitas jangka panjang, dan ekuitas.",
+        "poin_kunci": "Biaya perolehan vs nilai realisasi neto/nilai wajar, penurunan nilai (impairment), obligasi & amortisasi, serta ekuitas.",
+        "contoh": "Mengukur persediaan pada nilai yang lebih rendah antara biaya perolehan dan nilai realisasi neto."
     },
     "Akuntansi Keuangan Lanjutan": {
-        "ringkasan": "Persekutuan, penjualan konsinyasi, penjualan cicilan, kantor cabang, kombinasi bisnis, transaksi mata uang asing, dan laporan keuangan konsolidasian.",
-        "poin_kunci": "Eliminasi saldo resiprokal, kepentingan nonpengendali (NCI), goodwill, dan konsolidasi entitas anak.",
-        "contoh": "Mengeliminasi investasi induk pada entitas anak dan ekuitas anak saat menyusun laporan konsolidasi.",
-        "link": "https://www.ifrs.org/issued-standards/list-of-standards/"
+        "ringkasan": "Persekutuan, penjualan konsinyasi, penjualan cicilan, kantor cabang, kombinasi bisnis, transaksi mata uang asing, dan penyusunan laporan keuangan konsolidasian.",
+        "poin_kunci": "Eliminasi saldo resiprokal, kepentingan nonpengendali (NCI), goodwill, dan konsolidasi entitas induk & anak.",
+        "contoh": "Mengeliminasi investasi entitas induk pada entitas anak beserta ekuitas anak saat menyusun laporan konsolidasi."
+    },
+    "Analisis Laporan Keuangan": {
+        "ringkasan": "Teknik membaca dan mengevaluasi kondisi keuangan serta kinerja entitas melalui analisis horizontal (tren), vertikal (common size), rasio keuangan, dan arus kas.",
+        "poin_kunci": "Rasio likuiditas (current ratio, quick ratio), solvabilitas (DER), profitabilitas (ROA, ROE, GPM/NPM), aktivitas, dan analisis tren.",
+        "contoh": "Membandingkan Current Ratio dan Debt to Equity Ratio antarperiode untuk menilai kemampuan bayar jangka pendek dan struktur modal."
+    },
+    "Laporan Keuangan Daerah": {
+        "ringkasan": "Laporan pertanggungjawaban pelaksanaan APBD pemerintah daerah berbasis Standar Akuntansi Pemerintahan (SAP) yang terdiri dari 7 komponen utama laporan keuangan daerah.",
+        "poin_kunci": "LRA, Laporan Perubahan SAL, Neraca, Laporan Operasional (LO), Laporan Arus Kas (LAK), Laporan Perubahan Ekuitas (LPE), dan Catatan atas Laporan Keuangan (CaLK).",
+        "contoh": "Menyajikan realisasi pendapatan daerah dan belanja daerah pada LRA sekaligus beban akrual serta surplus/defisit LO pada Laporan Operasional."
+    },
+    "Laporan Keuangan Desa": {
+        "ringkasan": "Laporan pertanggungjawaban pengelolaan keuangan desa atas APBDes (Dana Desa, ADD, PADes, dan bantuan keuangan) yang disusun oleh Kepala Desa dan disampaikan secara berkala.",
+        "poin_kunci": "Laporan Realisasi Pelaksanaan APBDes (awal semester & akhir tahun), Laporan Pertanggungjawaban Realisasi APBDes, Buku Kas Umum, dan Catatan/Lampiran.",
+        "contoh": "Melaporkan anggaran, realisasi, serta selisih lebih/kurang belanja pembangunan dan pemberdayaan masyarakat desa per kegiatan."
+    },
+    "Laporan Keuangan Lainnya (Entitas Bisnis, Nirlaba, Konsolidasian & EMKM)": {
+        "ringkasan": "Beragam bentuk laporan keuangan sesuai karakteristik entitas: laporan laba rugi & penghasilan komprehensif lain, posisi keuangan, perubahan ekuitas, arus kas, laporan entitas nirlaba/berorientasi nonlaba, dan laporan berbasis SAK EMKM.",
+        "poin_kunci": "Komponen laporan keuangan komersial, penghasilan komprehensif lain (OCI), laporan entitas nirlaba (penghasilan & beban, posisi keuangan, arus kas), serta laporan ringkas UMKM/EMKM.",
+        "contoh": "Entitas nirlaba menyajikan klasifikasi aset neto/ekuitas tanpa pembatasan dan dengan pembatasan pemberi sumber daya, sedangkan UMKM dapat memakai format laporan sesuai SAK EMKM."
     },
     "Akuntansi Keuangan Desa": {
         "ringkasan": "Pengelolaan keuangan desa mulai dari perencanaan (APBDes), pelaksanaan, penatausahaan, pelaporan, hingga pertanggungjawaban atas Dana Desa, ADD, PADes, dan bantuan keuangan.",
         "poin_kunci": "APBDes, Buku Kas Umum (BKU), buku pembantu bank/pajak, Laporan Realisasi APBDes, dan pertanggungjawaban.",
-        "contoh": "Mencatat pencairan dan realisasi belanja pembangunan jalan desa sesuai pos anggaran pada APBDes.",
-        "link": "https://jdih.kemendagri.go.id/"
+        "contoh": "Mencatat pencairan dan realisasi belanja kegiatan pembangunan jalan desa sesuai pos anggaran pada APBDes."
     },
     "Manajemen Biaya & Akuntansi Manajemen": {
-        "ringkasan": "Klasifikasi biaya, job order & process costing, Activity-Based Costing (ABC), analisis biaya-volume-laba (CVP/BEP), anggaran, dan keputusan taktis.",
+        "ringkasan": "Klasifikasi biaya, job order & process costing, Activity-Based Costing (ABC), analisis biaya-volume-laba (CVP/BEP), anggaran, dan pengambilan keputusan taktis.",
         "poin_kunci": "Biaya tetap vs variabel, biaya langsung vs tidak langsung, Break-Even Point (BEP), analisis varians, dan relevan costing.",
-        "contoh": "Menghitung BEP unit untuk mengetahui batas minimal penjualan agar operasi tidak mengalami kerugian.",
-        "link": "https://www.ifrs.org/"
+        "contoh": "Menghitung BEP unit untuk mengetahui batas minimal penjualan agar operasi tidak mengalami kerugian."
     },
     "Akuntansi Sektor Publik": {
         "ringkasan": "Penganggaran, akuntansi dana, penilaian kinerja, dan akuntabilitas pada organisasi nirlaba serta entitas publik seperti yayasan, rumah sakit publik, dan lembaga sosial.",
         "poin_kunci": "Value for Money (ekonomi, efisiensi, efektivitas), akuntansi dana, anggaran berbasis kinerja, dan transparansi.",
-        "contoh": "Menilai efisiensi program layanan publik dengan membandingkan realisasi output terhadap biaya yang diserap.",
-        "link": "https://www.ipsasb.org/"
+        "contoh": "Menilai efisiensi program layanan publik dengan membandingkan realisasi output terhadap biaya yang diserap."
     },
     "Akuntansi Pemerintahan": {
         "ringkasan": "Standar Akuntansi Pemerintahan (SAP) berbasis akrual untuk pemerintah pusat dan daerah, mencakup LRA, LO, neraca, Laporan Arus Kas, dan jurnal finansial serta anggaran.",
         "poin_kunci": "Laporan Realisasi Anggaran (LRA), Laporan Operasional (LO), jurnal finansial vs jurnal anggaran, dan ekuitas SAL.",
-        "contoh": "Mencatat beban pegawai akrual pada LO sekaligus mencatat realisasi belanja pada LRA sesuai ketentuan SAP.",
-        "link": "https://www.ksap.org/"
+        "contoh": "Mencatat beban pegawai akrual pada LO sekaligus mencatat realisasi belanja pada LRA sesuai ketentuan SAP."
     },
     "Komputer Akuntansi 1": {
         "ringkasan": "Setup perusahaan, perancangan Chart of Accounts (COA), saldo awal, pencatatan transaksi jasa/dagang, rekonsiliasi, dan pelaporan keuangan berbasis aplikasi.",
         "poin_kunci": "Struktur kode akun, linked accounts, transaksi kas/bank/piutang/utang, dan validasi neraca saldo.",
-        "contoh": "Mengatur akun penampung otomatis (linked accounts) agar penjualan dan piutang terposting ke buku besar.",
-        "link": "https://web.iai.id/"
+        "contoh": "Mengatur akun penampung otomatis (linked accounts) agar penjualan dan piutang terposting ke buku besar."
     },
     "Komputer Akuntansi 2": {
         "ringkasan": "Pengelolaan persediaan multi-gudang/manufaktur, jadwal penyusutan aset tetap otomatis, pencatatan pajak/rekonsiliasi, audit log, dan analisis laporan keuangan sistem.",
         "poin_kunci": "Kartu stok/BOM, depresiasi otomatis, rekonsiliasi saldo modul dengan buku besar, dan kontrol akses.",
-        "contoh": "Menjalankan proses penyusutan aset tetap bulanan dan memeriksa kesesuaian saldo dengan buku besar.",
-        "link": "https://www.ifrs.org/"
+        "contoh": "Menjalankan proses penyusutan aset tetap bulanan dan memeriksa kesesuaian saldo dengan buku besar."
     },
     "Pengadaan Barang dan Jasa": {
         "ringkasan": "Prinsip, etika, perencanaan, pemilihan penyedia, kontrak, serah terima pekerjaan, serta dokumentasi pembayaran dan akuntabilitas pengadaan barang/jasa.",
         "poin_kunci": "Kesesuaian spesifikasi & pagu/HPS, transparansi & persaingan sehat, administrasi kontrak, dan bukti serah terima sah.",
-        "contoh": "Memverifikasi berita acara serah terima barang, kontrak, dan bukti pajak sebelum pencairan pembayaran.",
-        "link": "https://jdih.lkpp.go.id/"
+        "contoh": "Memverifikasi berita acara serah terima barang, kontrak, dan bukti pajak sebelum pencairan pembayaran."
     },
     "Audit Organisasi Publik": {
         "ringkasan": "Pemeriksaan independen dan sistematis atas keuangan, kinerja, dan kepatuhan organisasi sektor publik/pemerintahan beserta penyusunan temuan dan rekomendasi.",
         "poin_kunci": "Audit keuangan, audit kinerja, audit kepatuhan, bukti audit cukup & tepat, dan unsur temuan (kondisi, kriteria, sebab, akibat).",
-        "contoh": "Menguji kepatuhan penyaluran dan pertanggungjawaban bantuan/hibah terhadap aturan dan bukti pendukung.",
-        "link": "https://www.bpk.go.id/"
+        "contoh": "Menguji kepatuhan penyaluran dan pertanggungjawaban bantuan/hibah terhadap aturan dan bukti pendukung."
     },
     "Sistem Informasi Akuntansi & Manajemen": {
         "ringkasan": "Perancangan, pengendalian internal, siklus transaksi (pendapatan, pengeluaran, produksi, penggajian), dan pemanfaatan sistem informasi untuk keputusan manajerial.",
         "poin_kunci": "Pemisahan fungsi (segregation of duties), pengendalian input/proses/output, dokumen sumber, dan pelaporan manajemen.",
-        "contoh": "Memisahkan fungsi penyetuju pembelian, penerima barang, dan pencatat utang untuk menjaga pengendalian internal.",
-        "link": "https://www.bpk.go.id/"
+        "contoh": "Memisahkan fungsi penyetuju pembelian, penerima barang, dan pencatat utang untuk menjaga pengendalian internal."
     },
     "Akuntansi Digital": {
         "ringkasan": "Pemanfaatan cloud accounting, otomatisasi jurnal, e-invoicing, big data, dan AI dalam mempercepat pencatatan, rekonsiliasi, serta analisis keuangan.",
         "poin_kunci": "Digitalisasi bukti transaksi, integrasi data real-time, keamanan siber & integritas data, serta analitik keuangan.",
-        "contoh": "Merekonsiliasi transaksi e-invoice dan mutasi digital secara otomatis untuk mempercepat penutupan buku.",
-        "link": "https://web.iai.id/"
+        "contoh": "Merekonsiliasi transaksi e-invoice dan mutasi digital secara otomatis untuk mempercepat penutupan buku."
     },
     "Teknologi Keuangan (Fintech)": {
         "ringkasan": "Ekosistem pembayaran digital, e-wallet, pinjaman digital, open banking, serta pencatatan akuntansi, manajemen risiko, dan kepatuhan regulasi fintech.",
         "poin_kunci": "Alur settlement dana, pencatatan biaya transaksi/potongan gateway, risiko likuiditas & siber, serta perlindungan data.",
-        "contoh": "Mencatat penjualan bruto, potongan biaya layanan payment gateway, dan dana bersih yang masuk ke rekening.",
-        "link": "https://www.bi.go.id/"
+        "contoh": "Mencatat penjualan bruto, potongan biaya layanan payment gateway, dan dana bersih yang masuk ke rekening."
     },
     "Standar Nasional & Internasional (PSAK, SAK EMKM, SAP, IFRS, IPSAS)": {
         "ringkasan": "Perbandingan dan penerapan PSAK/IAI, SAK EMKM, SAP (pemerintah), IFRS (bisnis global), dan IPSAS (sektor publik internasional).",
         "poin_kunci": "Kesesuaian standar dengan karakteristik entitas, pengukuran & pengakuan, pengungkapan, dan konvergensi standar.",
-        "contoh": "Menerapkan SAK EMKM untuk entitas mikro/kecil yang memenuhi kriteria dan membutuhkan laporan keuangan sederhana.",
-        "link": "https://www.ifrs.org/"
+        "contoh": "Menerapkan SAK EMKM untuk entitas mikro/kecil yang memenuhi kriteria dan membutuhkan laporan keuangan sederhana."
     }
 }
 
@@ -269,14 +266,13 @@ ENGLISH_TERMS_BANK = [
 # =====================================================
 
 def clean_ai_text(text: str) -> str:
-    """Membersihkan tanda ** dan # di awal baris agar teks rapi tanpa simbol berantakan, sambil menjaga tabel Markdown."""
+    """Membersihkan tanda ** dan # di awal baris agar teks rapi tanpa merusak tabel Markdown."""
     if not text:
         return ""
     lines = []
     for line in text.splitlines():
         cleaned = line.replace("**", "").replace("__", "")
         stripped = cleaned.lstrip()
-        # Pertahankan baris tabel Markdown yang diawali '|'
         if not stripped.startswith("|") and stripped.startswith("#"):
             parts = stripped.split(" ", 1)
             cleaned = parts[1] if len(parts) > 1 else stripped.lstrip("#").strip()
@@ -323,8 +319,33 @@ def record_daily_play():
     st.session_state.user_profile["flame_alive"] = True
 
 
+def resolve_active_gemini_models() -> list[str]:
+    """Mendapatkan model aktif yang tersedia di akun/API dengan prioritas gemini-2.5-flash."""
+    preferred = ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-2.0-flash"]
+    discovered = []
+    try:
+        for m in client.models.list():
+            m_name = getattr(m, "name", "") or ""
+            short_name = m_name.replace("models/", "")
+            if short_name and short_name not in discovered:
+                discovered.append(short_name)
+    except Exception:
+        pass
+
+    ordered = []
+    for p in preferred:
+        if p in discovered and p not in ordered:
+            ordered.append(p)
+    for p in preferred:
+        if p not in ordered:
+            ordered.append(p)
+    for d in discovered:
+        if ("flash" in d or "pro" in d) and d not in ordered:
+            ordered.append(d)
+    return ordered[:5]
+
+
 def pick_relevant_sources(query_text: str) -> list[dict]:
-    """Memilih sumber resmi yang relevan dan bisa diakses berdasarkan kata kunci pertanyaan."""
     q = (query_text or "").lower()
     chosen = []
 
@@ -362,90 +383,56 @@ def pick_relevant_sources(query_text: str) -> list[dict]:
     return chosen[:3]
 
 
-def build_dynamic_prof_fallback(question: str, nickname: str, jenjang: str) -> str:
-    """Menyusun jawaban cadangan yang spesifik terhadap pertanyaan pengguna + tabel + sumber yang bisa diakses."""
-    q_clean = question.strip()
-    sources = pick_relevant_sources(q_clean)
-    src_lines = "\n".join([f"- {s['name']}: {s['url']}" for s in sources])
-
-    return (
-        f"Halo {nickname}, kita bahas langsung pertanyaanmu tentang '{q_clean}' untuk jenjang {jenjang} ya!\n\n"
-        f"1. Penjelasan Langsung: Topik '{q_clean}' berfokus pada bagaimana transaksi atau peristiwa ekonomi "
-        f"diidentifikasi dari bukti pendukung yang sah, diklasifikasikan ke akun/pos yang tepat, dicatat secara "
-        f"konsisten sesuai standar yang berlaku, lalu dilaporkan agar informasinya berguna bagi pengambil keputusan.\n\n"
-        f"2. Ringkasan Komponen Utama (Tabel):\n"
-        f"| Aspek | Fokus Utama | Catatan Praktis |\n"
-        f"| --- | --- | --- |\n"
-        f"| Bukti & Dasar Transaksi | Dokumen sumber sah & waktu kejadian | Pastikan tanggal, nominal, dan pihak terkait jelas |\n"
-        f"| Pencatatan / Perlakuan | Klasifikasi akun & aturan standar | Sesuaikan dengan jenis entitas dan standar yang dipakai |\n"
-        f"| Pelaporan & Evaluasi | Penyajian informasi & pengendalian | Cek kelengkapan dan konsistensi sebelum digunakan |\n\n"
-        f"3. Langkah Praktis Memahaminya: Mulai dari membaca konteks kasus '{q_clean}', tentukan akun atau "
-        f"pos utama yang bergerak, perhatikan arah perubahan (bertambah/berkurang atau debit/kredit), lalu cek "
-        f"dampaknya terhadap laporan keuangan.\n\n"
-        f"4. Sumber Rujukan yang Bisa Diakses:\n"
-        f"{src_lines}"
-    )
-
-
-def call_gemini_prof(question: str, nickname: str, jenjang: str, bahasa: str) -> str:
-    """Memanggil model Gemini agar Prof menjawab spesifik sesuai pertanyaan, memakai tabel bila relevan, dan menyertakan link sumber."""
+def ask_prof_gemini(question: str, nickname: str, jenjang: str, bahasa: str) -> tuple[str, list[dict], str | None]:
+    """Menghasilkan jawaban Prof yang sesuai pertanyaan, memakai tabel bila relevan, dan menyertakan sumber valid."""
     prompt = f"""
 Kamu adalah "Prof", mentor akuntansi yang ramah, seru, jelas, dan penjelasannya sangat mudah dipahami untuk jenjang "{jenjang}".
-Sapa pengguna dengan nama panggilan "{nickname}" secara akrab.
+Sapa pengguna dengan nama panggilan "{nickname}" secara santai dan akrab.
 Gunakan bahasa "{bahasa}".
 
-Jawablah pertanyaan berikut secara langsung, tepat sasaran, dan lengkap (jangan menyimpang ke topik lain):
+Jawab pertanyaan ini secara langsung, tepat sasaran, dan lengkap:
 "{question}"
 
-Aturan format dan isi:
-1. Jawab tepat sesuai pertanyaan pengguna; jika pertanyaannya spesifik (misalnya jurnal pembelian tunai, APBDes, depresiasi, rasio, audit, dll.), berikan penjelasan dan contoh/ilustrasi yang sesuai dengan pertanyaan itu.
-2. Jika pertanyaan memungkinkan atau terbantu dengan perbandingan, alur, komponen, atau contoh jurnal/perhitungan, sertakan tabel Markdown yang rapi (dengan baris header dan pemisah `| --- |`).
-3. Sertakan bagian "Sumber Rujukan" di akhir jawaban menggunakan URL resmi dan valid yang benar-benar bisa diakses, misalnya:
-   - Ikatan Akuntan Indonesia (IAI): https://web.iai.id/
-   - IFRS Foundation: https://www.ifrs.org/
-   - Komite Standar Akuntansi Pemerintahan (KSAP): https://www.ksap.org/
-   - Badan Pemeriksa Keuangan RI (BPK): https://www.bpk.go.id/
-   - JDIH Kemendagri: https://jdih.kemendagri.go.id/
-   - JDIH LKPP: https://jdih.lkpp.go.id/
-   - IPSASB: https://www.ipsasb.org/
-   - Bank Indonesia: https://www.bi.go.id/
-4. Jangan gunakan tanda bintang ganda (**) atau tanda pagar (#) di awal judul.
+Aturan:
+1. Jawab tepat sesuai isi pertanyaan "{question}" (jangan memberi jawaban umum yang tidak nyambung dengan pertanyaan).
+2. Jika pertanyaan terbantu dengan perbandingan, klasifikasi, contoh jurnal/perhitungan, atau komponen, sertakan tabel Markdown yang rapi pada baris terpisah (menggunakan '|' dan '---').
+3. Sertakan bagian "Sumber Rujukan" di akhir jawaban menggunakan URL resmi yang valid dan bisa diakses (misalnya IAI: https://web.iai.id/ , IFRS: https://www.ifrs.org/ , KSAP: https://www.ksap.org/ , BPK: https://www.bpk.go.id/ , JDIH Kemendagri: https://jdih.kemendagri.go.id/ , LKPP: https://jdih.lkpp.go.id/).
+4. Jangan gunakan tanda ** atau # di awal judul.
 """
-    fallback = build_dynamic_prof_fallback(question, nickname, jenjang)
+    models_to_try = resolve_active_gemini_models()
+    last_err = None
 
-    models_sequence = []
-    for m in [MODEL_NAME] + FALLBACK_MODELS:
-        if m and m not in models_sequence:
-            models_sequence.append(m)
-
-    for model_id in models_sequence:
+    for model_id in models_to_try:
         for attempt in range(2):
             try:
                 response = client.models.generate_content(
                     model=model_id,
                     contents=prompt
                 )
-                cleaned = clean_ai_text(response.text or "")
-                if cleaned:
+                raw_text = (response.text or "").strip()
+                if raw_text:
+                    cleaned = clean_ai_text(raw_text)
                     if "http" not in cleaned:
                         srcs = pick_relevant_sources(question)
-                        src_block = "\n".join([f"- {s['name']}: {s['url']}" for s in srcs])
-                        cleaned = f"{cleaned}\n\nSumber Rujukan:\n{src_block}"
-                    return cleaned
+                        src_lines = "\n".join([f"- {s['name']}: {s['url']}" for s in srcs])
+                        cleaned = f"{cleaned}\n\nSumber Rujukan:\n{src_lines}"
+
+                    table_rows = [
+                        {
+                            "Pertanyaan / Topik": question[:65],
+                            "Fokus Pembahasan": "Pengertian, mekanisme/pencatatan, dan contoh sesuai konteks",
+                            "Acuan Standar / Sumber": "IAI (https://web.iai.id/) / IFRS (https://www.ifrs.org/)"
+                        }
+                    ]
+                    return cleaned, table_rows, None
             except Exception as e:
-                err_str = str(e)
-                is_transient = (
-                    "503" in err_str
-                    or "UNAVAILABLE" in err_str
-                    or "429" in err_str
-                    or "RESOURCE_EXHAUSTED" in err_str
-                )
-                if is_transient and attempt == 0:
+                last_err = str(e)
+                if ("503" in last_err or "UNAVAILABLE" in last_err or "429" in last_err) and attempt == 0:
                     time.sleep(1.2)
                     continue
                 break
 
-    return clean_ai_text(fallback)
+    return "", [], last_err
 
 
 def generate_quiz_batch(topic: str, jenjang: str, bahasa: str, count: int, seed_offset: int = 0) -> list[dict]:
@@ -467,7 +454,7 @@ Aturan penting:
 Seed variasi: {seed_offset}-{random.randint(1000, 9999)}
 """
     questions = []
-    for model_id in [MODEL_NAME] + FALLBACK_MODELS:
+    for model_id in resolve_active_gemini_models():
         try:
             response = client.models.generate_content(
                 model=model_id,
@@ -554,7 +541,7 @@ Seed variasi: {seed_offset}-{random.randint(1000, 9999)}
 
 def deterministic_room_score(room_code: str, player_name: str, topic: str) -> int:
     digest = hashlib.sha256(f"{room_code}:{player_name}:{topic}".encode("utf-8")).hexdigest()
-    return 50 + (int(digest[:4], 16) % 46)  # 50 - 95 poin
+    return 50 + (int(digest[:4], 16) % 46)
 
 
 # =====================================================
@@ -592,7 +579,8 @@ if "prof_messages" not in st.session_state:
                 "Halo! Prof di sini siap nemenin kamu diskusi akuntansi dengan santai, jelas, "
                 "pakai tabel kalau perlu, dan lengkap dengan sumber rujukan yang bisa kamu cek sendiri. "
                 "Mau tanya apa hari ini?"
-            )
+            ),
+            "table_data": []
         }
     ]
 
@@ -630,6 +618,9 @@ if "mabar_state" not in st.session_state:
 
 if "task_history" not in st.session_state:
     st.session_state.task_history = []
+
+if "materi_deep_read" not in st.session_state:
+    st.session_state.materi_deep_read = {}
 
 
 # =====================================================
@@ -1043,7 +1034,7 @@ with tab_quiz:
 with tab_prof:
     st.markdown(
         "<div class='fq-card'><h4>Ruang Diskusi Bareng Prof</h4>"
-        "<p>Tanyakan hal spesifik seputar akuntansi—Prof menjawab sesuai pertanyaanmu, lengkap dengan tabel bila relevan dan link sumber yang bisa diakses.</p></div>",
+        "<p>Tanya apa saja seputar akuntansi—Prof menjawab langsung sesuai pertanyaanmu, lengkap dengan tabel bila relevan dan sumber rujukan yang bisa diakses.</p></div>",
         unsafe_allow_html=True
     )
 
@@ -1053,30 +1044,52 @@ with tab_prof:
         )
         with st.chat_message(msg["role"], avatar=avatar_icon):
             st.markdown(msg["content"])
+            if msg.get("table_data"):
+                st.dataframe(pd.DataFrame(msg["table_data"]), use_container_width=True)
 
-    prof_input = st.chat_input("Tanya apa saja ke Prof (misal: jurnal pembelian tunai, perbedaan LRA & LO, dll.)...")
+    prof_input = st.chat_input("Ketik pertanyaanmu ke Prof (misal: pembelian itu apa, laporan keuangan daerah, dll.)...")
     if prof_input:
-        st.session_state.prof_messages.append({"role": "user", "content": prof_input})
+        st.session_state.prof_messages.append({"role": "user", "content": prof_input, "table_data": []})
         with st.chat_message("user", avatar=CUTE_AVATARS.get(profile["avatar_name"], "🦊")):
             st.markdown(prof_input)
 
-        with st.spinner("Prof sedang menyiapkan jawaban lengkap & tabel rujukan..."):
-            reply_text = call_gemini_prof(
+        with st.spinner("Prof sedang menyiapkan jawaban untuk pertanyaanmu..."):
+            ans_text, tbl_data, err_msg = ask_prof_gemini(
                 question=prof_input,
                 nickname=profile["nickname"],
                 jenjang=profile["jenjang"],
                 bahasa=profile["bahasa"]
             )
 
-        st.session_state.prof_messages.append({"role": "assistant", "content": reply_text})
-        record_daily_play()
-        profile["total_xp"] += 5
-        with st.chat_message("assistant", avatar="👨‍🏫"):
-            st.markdown(reply_text)
+        if ans_text:
+            st.session_state.prof_messages.append({
+                "role": "assistant",
+                "content": ans_text,
+                "table_data": tbl_data
+            })
+            record_daily_play()
+            profile["total_xp"] += 5
+            with st.chat_message("assistant", avatar="👨‍🏫"):
+                st.markdown(ans_text)
+                if tbl_data:
+                    st.dataframe(pd.DataFrame(tbl_data), use_container_width=True)
+        else:
+            fail_msg = (
+                f"Maaf {profile['nickname']}, Prof belum berhasil terhubung ke layanan AI saat ini. "
+                f"Coba kirim ulang pertanyaannya beberapa saat lagi ya.\n\n"
+                f"Sumber Rujukan:\n"
+                f"- Ikatan Akuntan Indonesia (IAI): https://web.iai.id/\n"
+                f"- IFRS Foundation: https://www.ifrs.org/"
+            )
+            st.session_state.prof_messages.append({"role": "assistant", "content": fail_msg, "table_data": []})
+            with st.chat_message("assistant", avatar="👨‍🏫"):
+                st.markdown(fail_msg)
+            if err_msg:
+                st.caption(f"Detail teknis: {err_msg}")
 
 
 # =====================================================
-# TAB 3: MABAR ROOM (MANTAP & BISA DIAKSES)
+# TAB 3: MABAR ROOM
 # =====================================================
 
 with tab_mabar:
@@ -1171,7 +1184,7 @@ with tab_mabar:
                     earned = 25 + speed_bonus
                     ms["my_points"] += earned
                     status_r = f"Benar (+{earned} pts)"
-                    st.success(f"Mantap! Jawaban tepat — kamu dapat +{earned} poin (termasuk bonus kecepatan +{speed_bonus}).")
+                    st.success(f"Mantap! Jawaban tepat — kamu dapat +{earned} poin (bonus kecepatan +{speed_bonus}).")
                 else:
                     status_r = "Salah (0 pts)"
                     st.info(f"Belum tepat. Kunci jawaban: {mabar_labels[correct_i]} — {cur_q['explanation']}")
@@ -1231,13 +1244,20 @@ with tab_english:
     selected_term = st.selectbox("Pilih istilah untuk dibedah lengkap:", [x["term"] for x in ENGLISH_TERMS_BANK])
     if st.button("Bedah Istilah Ini", type="primary"):
         with st.spinner("Menyiapkan penjelasan istilah..."):
-            out_eng = call_gemini_prof(
+            out_eng, tbl_eng, _ = ask_prof_gemini(
                 question=f"Jelaskan istilah akuntansi '{selected_term}', arti padanannya, contoh jurnal/laporan keuangan, dan kesalahan umum.",
                 nickname=profile["nickname"],
                 jenjang=profile["jenjang"],
                 bahasa="Bahasa Indonesia"
             )
-        st.markdown(out_eng)
+        if out_eng:
+            st.markdown(out_eng)
+            if tbl_eng:
+                st.dataframe(pd.DataFrame(tbl_eng), use_container_width=True)
+        else:
+            item_obj = next((x for x in ENGLISH_TERMS_BANK if x["term"] == selected_term), None)
+            if item_obj:
+                st.info(f"{item_obj['term']} ({item_obj['id_meaning']}): {item_obj['explanation']} Contoh: {item_obj['example']}")
         record_daily_play()
 
 
@@ -1260,7 +1280,7 @@ with tab_tugas:
             st.warning("Silakan tulis soal atau kasus tugas terlebih dahulu.")
         else:
             with st.spinner("Menyusun langkah penyelesaian & sumber rujukan..."):
-                ans_task = call_gemini_prof(
+                ans_task, tbl_task, _ = ask_prof_gemini(
                     question=f"[{task_topic}] Bantu selesaikan tugas berikut secara runtut beserta tabel jika relevan dan sumber rujukan resmi:\n{task_question}",
                     nickname=profile["nickname"],
                     jenjang=profile["jenjang"],
@@ -1269,7 +1289,8 @@ with tab_tugas:
             st.session_state.task_history.insert(0, {
                 "Topik": task_topic,
                 "Tugas": task_question,
-                "Jawaban": ans_task
+                "Jawaban": ans_task or "Belum dapat terhubung ke layanan AI saat ini. Silakan coba lagi sebentar lagi.",
+                "Tabel": tbl_task
             })
             record_daily_play()
             profile["total_xp"] += 15
@@ -1278,31 +1299,78 @@ with tab_tugas:
     for item in st.session_state.task_history:
         st.markdown(f"<div class='fq-card'><h4>{item['Topik']}</h4><p>{item['Tugas']}</p></div>", unsafe_allow_html=True)
         st.markdown(item["Jawaban"])
+        if item.get("Tabel"):
+            st.dataframe(pd.DataFrame(item["Tabel"]), use_container_width=True)
 
 
 # =====================================================
-# TAB 6: 16 MATERI (LINK MODUL BERBEDA) & VARIANS
+# TAB 6: MATERI BACAAN LENGKAP (TANPA LINK RUSAK) & VARIANS
 # =====================================================
 
 with tab_materi:
     st.markdown(
-        "<div class='fq-card'><h4>Modul Bacaan 16 Materi Akuntansi & Analisis Varians</h4>"
-        "<p>Setiap materi memiliki link modul/referensi bacaan yang berbeda-beda agar kamu bisa membaca dan mengeksplorasi seluruh topik akuntansi.</p></div>",
+        "<div class='fq-card'><h4>Ruang Baca Materi Akuntansi & Analisis Varians</h4>"
+        "<p>Baca seluruh materi akuntansi langsung di dalam aplikasi—termasuk Analisis Laporan Keuangan, Laporan Keuangan Daerah, "
+        "Laporan Keuangan Desa, dan berbagai jenis Laporan Keuangan lainnya—tanpa tautan eksternal yang rusak.</p></div>",
         unsafe_allow_html=True
     )
 
-    for idx_m, m_name in enumerate(MATERI_AKUNTANSI, start=1):
-        info = MATERI_DETAILS[m_name]
-        st.markdown(
-            f"<div class='fq-card'>"
-            f"<h4>{idx_m}. {m_name}</h4>"
-            f"<p>{info['ringkasan']}</p>"
-            f"<p style='margin-top:6px;'><b>Poin Kunci:</b> {info['poin_kunci']}</p>"
-            f"<p style='margin-top:6px;'><b>Contoh:</b> {info['contoh']}</p>"
-            f"<p style='margin-top:8px;'><a href='{info['link']}' target='_blank'>Buka Modul Bacaan {m_name}</a></p>"
-            f"</div>",
-            unsafe_allow_html=True
-        )
+    selected_materi = st.selectbox(
+        "Pilih materi untuk dibaca & didalami:",
+        MATERI_AKUNTANSI,
+        key="materi_reader_select"
+    )
+    info_pilihan = MATERI_DETAILS[selected_materi]
+
+    st.markdown(
+        f"<div class='fq-card'>"
+        f"<h4>{selected_materi}</h4>"
+        f"<p><b>Ringkasan Materi:</b> {info_pilihan['ringkasan']}</p>"
+        f"<p style='margin-top:8px;'><b>Poin & Konsep Kunci:</b> {info_pilihan['poin_kunci']}</p>"
+        f"<p style='margin-top:8px;'><b>Contoh Penerapan:</b> {info_pilihan['contoh']}</p>"
+        f"</div>",
+        unsafe_allow_html=True
+    )
+
+    if st.button("Buat Penjelasan Bacaan Mendalam Materi Ini", type="primary"):
+        with st.spinner(f"Menyusun bahan bacaan lengkap {selected_materi}..."):
+            deep_txt, deep_tbl, _ = ask_prof_gemini(
+                question=(
+                    f"Buatkan bahan bacaan pembelajaran yang jelas, terstruktur, dan mudah dipahami tentang '{selected_materi}' "
+                    f"untuk jenjang '{profile['jenjang']}'. Sertakan pengertian, komponen/jenis/rumus utama, contoh kasus/ilustrasi "
+                    f"dalam bentuk tabel bila sesuai, serta tips belajar."
+                ),
+                nickname=profile["nickname"],
+                jenjang=profile["jenjang"],
+                bahasa=profile["bahasa"]
+            )
+        if deep_txt:
+            st.session_state.materi_deep_read[selected_materi] = {
+                "text": deep_txt,
+                "table": deep_tbl
+            }
+            record_daily_play()
+            profile["total_xp"] += 10
+            st.rerun()
+
+    if selected_materi in st.session_state.materi_deep_read:
+        saved_read = st.session_state.materi_deep_read[selected_materi]
+        st.markdown(f"<div class='fq-card'><h4>Catatan Bacaan Lengkap: {selected_materi}</h4></div>", unsafe_allow_html=True)
+        st.markdown(saved_read["text"])
+        if saved_read.get("table"):
+            st.dataframe(pd.DataFrame(saved_read["table"]), use_container_width=True)
+
+    with st.expander(f"Lihat Daftar Ringkas Semua {len(MATERI_AKUNTANSI)} Materi Akuntansi"):
+        katalog_df = pd.DataFrame([
+            {
+                "No": i + 1,
+                "Materi Akuntansi": m_name,
+                "Ringkasan": MATERI_DETAILS[m_name]["ringkasan"],
+                "Poin Kunci": MATERI_DETAILS[m_name]["poin_kunci"]
+            }
+            for i, m_name in enumerate(MATERI_AKUNTANSI)
+        ])
+        st.dataframe(katalog_df, use_container_width=True)
 
     st.divider()
     st.subheader("Analisis Budget vs. Actuals (.xlsx)")
