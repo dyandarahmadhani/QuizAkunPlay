@@ -45,10 +45,20 @@ if not GEMINI_API_KEY:
     st.stop()
 
 # =====================================================
-# 3. INITIALIZE GEMINI CLIENT
+# 3. INITIALIZE GEMINI CLIENT & SHARED MULTIPLAYER STORE
 # =====================================================
 
 client = genai.Client(api_key=GEMINI_API_KEY)
+
+@st.cache_resource
+def get_shared_mabar_rooms() -> dict:
+    """
+    Penyimpanan bersama di memori server agar pemain dari perangkat berbeda (HP/Laptop lain)
+    yang masuk ke Kode Room yang sama mendapatkan paket soal yang sama dan saling melihat skor.
+    """
+    return {}
+
+SHARED_ROOMS = get_shared_mabar_rooms()
 
 # =====================================================
 # 4. CONSTANTS, CATALOGS & VERIFIED SOURCES
@@ -384,7 +394,6 @@ def pick_relevant_sources(query_text: str) -> list[dict]:
 
 
 def ask_prof_gemini(question: str, nickname: str, jenjang: str, bahasa: str) -> tuple[str, list[dict], str | None]:
-    """Menghasilkan jawaban Prof yang sesuai pertanyaan, memakai tabel bila relevan, dan menyertakan sumber valid."""
     prompt = f"""
 Kamu adalah "Prof", mentor akuntansi yang ramah, seru, jelas, dan penjelasannya sangat mudah dipahami untuk jenjang "{jenjang}".
 Sapa pengguna dengan nama panggilan "{nickname}" secara santai dan akrab.
@@ -539,11 +548,6 @@ Seed variasi: {seed_offset}-{random.randint(1000, 9999)}
     return questions[:count]
 
 
-def deterministic_room_score(room_code: str, player_name: str, topic: str) -> int:
-    digest = hashlib.sha256(f"{room_code}:{player_name}:{topic}".encode("utf-8")).hexdigest()
-    return 50 + (int(digest[:4], 16) % 46)
-
-
 # =====================================================
 # 6. SESSION STATE INITIALIZATION
 # =====================================================
@@ -598,21 +602,12 @@ if "quiz_state" not in st.session_state:
         "q_start_ts": None
     }
 
-if "mabar_state" not in st.session_state:
-    qp_room = st.query_params.get("room", "AKUN-888")
-    qp_topic = st.query_params.get("topic", "Pengantar Akuntansi 1")
-    valid_topic = qp_topic if qp_topic in MATERI_AKUNTANSI else "Pengantar Akuntansi 1"
-    st.session_state.mabar_state = {
-        "room_code": str(qp_room).upper(),
-        "topic": valid_topic,
-        "jenjang": "Mahasiswa/i",
-        "num_rounds": 5,
-        "rivals": ["Raka (Rubah)", "Nadia (Panda)", "Bima (Kucing)", "Salsa (Burung Hantu)"],
-        "started": False,
+if "mabar_client" not in st.session_state:
+    qp_room = st.query_params.get("room", "")
+    st.session_state.mabar_client = {
+        "active_room": str(qp_room).strip().upper(),
         "q_index": 0,
-        "my_points": 0,
         "round_start_ts": None,
-        "questions": [],
         "history": []
     }
 
@@ -888,7 +883,7 @@ st.markdown(
     f"""
     <div class='fq-hero'>
         <h1>FinQuest AI — Accounting Quiz & Learning Hub</h1>
-        <p>Kuis 1–100 soal, diskusi bareng Prof dengan tabel & sumber valid, serta mabar room lintas perangkat.</p>
+        <p>Kuis 1–100 soal, diskusi bareng Prof dengan tabel & sumber valid, serta mabar real-time lintas perangkat.</p>
         <div class='fq-pills'>
             <span class='fq-pill'>👤 {profile['nickname']}</span>
             <span class='fq-pill'>🎓 {profile['jenjang']}</span>
@@ -909,7 +904,7 @@ st.markdown(
 tab_quiz, tab_prof, tab_mabar, tab_english, tab_tugas, tab_materi = st.tabs([
     "🎯 Kuis (1–100 Soal)",
     "👨‍🏫 Ruang Prof",
-    "🤝 Mabar Room",
+    "🤝 Mabar Lintas Perangkat",
     "🌐 English Akuntansi",
     "📚 Bantu Tugas",
     "📖 Materi & Varians"
@@ -1089,132 +1084,212 @@ with tab_prof:
 
 
 # =====================================================
-# TAB 3: MABAR ROOM
+# TAB 3: MABAR LINTAS PERANGKAT (REAL-TIME SHARED ROOM)
 # =====================================================
 
 with tab_mabar:
-    ms = st.session_state.mabar_state
-
     st.markdown(
-        f"<div class='fq-card'><h4>Arena Mabar Room — Kode Aktif: {ms['room_code']}</h4>"
-        f"<p>Buat atau masuk room mabar, bagikan parameter room ke teman di perangkat lain, jawab cepat untuk bonus poin, dan pantau papan peringkat.</p></div>",
+        "<div class='fq-card'><h4>Mabar Lintas Perangkat (HP / Laptop Berbeda)</h4>"
+        "<p>1) Host membuat Room lalu membagikan Kode Room / Tautan Undangan ke teman. "
+        "2) Teman membuka aplikasi ini di HP/laptop lain, memasukkan Kode Room yang sama, lalu klik Gabung Room. "
+        "3) Soal yang muncul sama persis dan skor setiap perangkat langsung masuk ke papan peringkat bersama!</p></div>",
         unsafe_allow_html=True
     )
 
-    col_m1, col_m2, col_m3, col_m4 = st.columns([1.3, 1.8, 1, 1])
-    with col_m1:
-        room_inp = st.text_input("Kode Room", value=ms["room_code"])
-    with col_m2:
-        topic_default_idx = MATERI_AKUNTANSI.index(ms["topic"]) if ms["topic"] in MATERI_AKUNTANSI else 0
-        mabar_topic = st.selectbox("Topik Pertandingan", MATERI_AKUNTANSI, index=topic_default_idx, key="mabar_topic_sel")
-    with col_m3:
-        mabar_jenjang = st.selectbox("Jenjang", ["Siswa", "Mahasiswa/i"], index=0 if profile["jenjang"] == "Siswa" else 1, key="mabar_jenjang_sel")
-    with col_m4:
-        mabar_rounds = st.number_input("Jumlah Ronde", min_value=3, max_value=15, value=int(ms.get("num_rounds", 5)), step=1)
+    mc = st.session_state.mabar_client
+    default_code = mc["active_room"] or f"AKUN-{random.randint(100, 999)}"
 
-    clean_room = "".join(ch for ch in room_inp.strip().upper() if ch.isalnum() or ch in ("-", "_")) or "AKUN-888"
-    st.query_params["room"] = clean_room
-    st.query_params["topic"] = mabar_topic
+    col_setup1, col_setup2 = st.columns(2)
 
-    col_invite1, col_invite2 = st.columns([2, 1])
-    with col_invite1:
-        st.text_input(
-            "Salin Parameter Undangan Room (tambahkan di akhir URL aplikasi):",
-            value=f"?room={clean_room}&topic={quote(mabar_topic)}",
-            disabled=True
+    with col_setup1:
+        st.markdown("#### A. Buat Room Baru (Host)")
+        host_room_code = st.text_input("Kode Room Baru", value=default_code, key="host_room_code_inp")
+        host_topic = st.selectbox("Topik Mabar", MATERI_AKUNTANSI, key="host_mabar_topic")
+        host_jenjang = st.selectbox("Jenjang", ["Siswa", "Mahasiswa/i"], index=0 if profile["jenjang"] == "Siswa" else 1, key="host_mabar_jenjang")
+        host_rounds = st.number_input("Jumlah Soal Mabar", min_value=3, max_value=20, value=5, step=1, key="host_mabar_rounds")
+
+        if st.button("Buat & Masuk Room Sekarang", type="primary"):
+            clean_code = "".join(c for c in host_room_code.strip().upper() if c.isalnum() or c in ("-", "_")) or "AKUN-888"
+            with st.spinner(f"Membuat Room {clean_code} dan menyiapkan soal bersama..."):
+                q_list = generate_quiz_batch(
+                    topic=host_topic,
+                    jenjang=host_jenjang,
+                    bahasa=profile["bahasa"],
+                    count=int(host_rounds),
+                    seed_offset=sum(ord(c) for c in clean_code)
+                )
+                player_key = f"{profile['nickname']} ({av_emoji})"
+                SHARED_ROOMS[clean_code] = {
+                    "room_code": clean_code,
+                    "host": player_key,
+                    "topic": host_topic,
+                    "jenjang": host_jenjang,
+                    "created_at": datetime.now().strftime("%H:%M:%S"),
+                    "questions": q_list,
+                    "players": {
+                        player_key: {
+                            "score": 0,
+                            "answered": 0,
+                            "status": "Sedang Bermain",
+                            "updated_at": datetime.now().strftime("%H:%M:%S")
+                        }
+                    }
+                }
+                mc["active_room"] = clean_code
+                mc["q_index"] = 0
+                mc["round_start_ts"] = datetime.now().timestamp()
+                mc["history"] = []
+                st.query_params["room"] = clean_code
+                record_daily_play()
+                profile["total_xp"] += 15
+                st.rerun()
+
+    with col_setup2:
+        st.markdown("#### B. Gabung Room Teman (Dari Perangkat Lain)")
+        join_code_inp = st.text_input(
+            "Masukkan Kode Room dari Teman",
+            value=str(st.query_params.get("room", mc["active_room"])).upper(),
+            placeholder="Contoh: AKUN-888",
+            key="join_room_code_inp"
         )
-    with col_invite2:
-        new_friend = st.text_input("Tambah Nama Teman di Room", placeholder="Contoh: Citra")
-        if st.button("Masuk ke Daftar Room"):
-            fname = new_friend.strip()
-            if fname and fname not in ms["rivals"]:
-                ms["rivals"].append(fname)
-                st.success(f"{fname} bergabung ke room {clean_room}!")
+        guest_nickname = st.text_input(
+            "Nama Panggilan Kamu di Room",
+            value=profile["nickname"],
+            key="join_guest_nick_inp"
+        )
 
-    if st.button("Mulai / Gabung Room Mabar Sekarang", type="primary"):
-        with st.spinner(f"Menyiapkan {int(mabar_rounds)} ronde mabar topik {mabar_topic} di room {clean_room}..."):
-            ms["room_code"] = clean_room
-            ms["topic"] = mabar_topic
-            ms["jenjang"] = mabar_jenjang
-            ms["num_rounds"] = int(mabar_rounds)
-            ms["started"] = True
-            ms["q_index"] = 0
-            ms["my_points"] = 0
-            ms["round_start_ts"] = datetime.now().timestamp()
-            ms["history"] = []
-            ms["questions"] = generate_quiz_batch(
-                topic=mabar_topic,
-                jenjang=mabar_jenjang,
-                bahasa=profile["bahasa"],
-                count=int(mabar_rounds),
-                seed_offset=sum(ord(c) for c in clean_room)
+        if st.button("Gabung Room Teman", type="primary"):
+            target_code = "".join(c for c in join_code_inp.strip().upper() if c.isalnum() or c in ("-", "_"))
+            if not target_code or target_code not in SHARED_ROOMS:
+                st.error(
+                    f"Room '{target_code or '-'}' belum ditemukan. Pastikan Host sudah klik 'Buat & Masuk Room Sekarang' "
+                    f"dan kode room yang dimasukkan sama persis."
+                )
+            else:
+                if guest_nickname.strip():
+                    profile["nickname"] = guest_nickname.strip()
+                player_key = f"{profile['nickname']} ({av_emoji})"
+                room_obj = SHARED_ROOMS[target_code]
+                if player_key not in room_obj["players"]:
+                    room_obj["players"][player_key] = {
+                        "score": 0,
+                        "answered": 0,
+                        "status": "Sedang Bermain",
+                        "updated_at": datetime.now().strftime("%H:%M:%S")
+                    }
+                mc["active_room"] = target_code
+                mc["q_index"] = room_obj["players"][player_key]["answered"]
+                mc["round_start_ts"] = datetime.now().timestamp()
+                mc["history"] = []
+                st.query_params["room"] = target_code
+                record_daily_play()
+                st.rerun()
+
+        if SHARED_ROOMS:
+            st.caption("Room Aktif Saat Ini:")
+            for r_code, r_data in list(SHARED_ROOMS.items())[-5:]:
+                st.write(f"• Kode: {r_code} — Topik: {r_data['topic']} ({len(r_data['players'])} pemain)")
+
+    # TAMPILAN ARENA JIKA SUDAH BERADA DI DALAM ROOM AKTIF
+    active_code = mc.get("active_room", "")
+    if active_code and active_code in SHARED_ROOMS:
+        room_data = SHARED_ROOMS[active_code]
+        player_key = f"{profile['nickname']} ({av_emoji})"
+        if player_key not in room_data["players"]:
+            room_data["players"][player_key] = {
+                "score": 0,
+                "answered": 0,
+                "status": "Sedang Bermain",
+                "updated_at": datetime.now().strftime("%H:%M:%S")
+            }
+
+        st.divider()
+        col_bar1, col_bar2 = st.columns([3, 1])
+        with col_bar1:
+            st.success(
+                f"Terhubung di Room {active_code} | Topik: {room_data['topic']} | "
+                f"Bagikan kode '{active_code}' atau tautan dengan akhiran ?room={active_code} ke HP/laptop teman!"
             )
-            record_daily_play()
-            profile["total_xp"] += 15
-            st.rerun()
+        with col_bar2:
+            if st.button("🔄 Refresh Skor Teman"):
+                st.rerun()
 
-    if ms["started"] and ms["questions"]:
-        q_idx = ms["q_index"]
-        total_r = len(ms["questions"])
+        st.code(f"Kode Undangan: {active_code}   |   Parameter Link: ?room={quote(active_code)}", language="text")
 
-        m_met1, m_met2, m_met3 = st.columns(3)
-        m_met1.metric("Room", ms["room_code"])
-        m_met2.metric("Ronde", f"{min(q_idx + 1, total_r)} / {total_r}")
-        m_met3.metric("Poin Kamu", f"{ms['my_points']} pts")
+        q_list = room_data["questions"]
+        total_r = len(q_list)
+        q_idx = mc["q_index"]
+        my_record = room_data["players"][player_key]
+
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Kode Room", active_code)
+        m2.metric("Peserta Aktif", f"{len(room_data['players'])} Orang")
+        m3.metric("Progresmu", f"{min(q_idx, total_r)} / {total_r}")
+        m4.metric("Skor Kamu", f"{my_record['score']} pts")
 
         if q_idx < total_r:
-            cur_q = ms["questions"][q_idx]
-            elapsed_r = max(0, int(datetime.now().timestamp() - (ms["round_start_ts"] or datetime.now().timestamp())))
+            cur_q = q_list[q_idx]
+            elapsed_r = max(0, int(datetime.now().timestamp() - (mc["round_start_ts"] or datetime.now().timestamp())))
             speed_bonus = max(0, 15 - (elapsed_r // 4))
 
             st.markdown(
-                f"<div class='fq-card'><h4>Ronde {q_idx + 1} dari {total_r} — {ms['topic']}</h4>"
-                f"<p style='color:#0F172A; font-size:1rem; font-weight:600; margin-top:6px;'>{cur_q['question']}</p></div>",
+                f"<div class='fq-card'><h4>Soal {q_idx + 1} dari {total_r}</h4>"
+                f"<p style='color:#0F172A; font-size:1.02rem; font-weight:600; margin-top:6px;'>{cur_q['question']}</p></div>",
                 unsafe_allow_html=True
             )
 
             letters = ["A", "B", "C", "D"]
             mabar_labels = [f"{letters[i]}. {cur_q['options'][i]}" for i in range(4)]
-            pilihan_mabar = st.radio("Pilih jawaban tercepatmu:", mabar_labels, key=f"mabar_opt_{ms['room_code']}_{q_idx}")
+            pilihan_mabar = st.radio(
+                "Pilih jawabanmu:",
+                mabar_labels,
+                key=f"shared_mabar_opt_{active_code}_{player_key}_{q_idx}"
+            )
 
-            if st.button("Kunci Jawaban Ronde", type="primary"):
+            if st.button("Kirim Jawaban Mabar", type="primary"):
                 chosen_i = mabar_labels.index(pilihan_mabar)
                 correct_i = cur_q["correct_index"]
                 if chosen_i == correct_i:
                     earned = 25 + speed_bonus
-                    ms["my_points"] += earned
-                    status_r = f"Benar (+{earned} pts)"
-                    st.success(f"Mantap! Jawaban tepat — kamu dapat +{earned} poin (bonus kecepatan +{speed_bonus}).")
+                    my_record["score"] += earned
+                    res_label = f"Benar (+{earned} pts)"
                 else:
-                    status_r = "Salah (0 pts)"
-                    st.info(f"Belum tepat. Kunci jawaban: {mabar_labels[correct_i]} — {cur_q['explanation']}")
+                    res_label = f"Salah (Kunci: {letters[correct_i]})"
 
-                ms["history"].append({
-                    "Ronde": q_idx + 1,
+                my_record["answered"] = q_idx + 1
+                my_record["updated_at"] = datetime.now().strftime("%H:%M:%S")
+                if q_idx + 1 >= total_r:
+                    my_record["status"] = "Selesai"
+
+                mc["history"].append({
+                    "No": q_idx + 1,
                     "Jawaban Kamu": mabar_labels[chosen_i],
-                    "Kunci": mabar_labels[correct_i],
-                    "Hasil": status_r
+                    "Kunci Jawaban": mabar_labels[correct_i],
+                    "Hasil": res_label
                 })
-                ms["q_index"] += 1
-                ms["round_start_ts"] = datetime.now().timestamp()
+                mc["q_index"] += 1
+                mc["round_start_ts"] = datetime.now().timestamp()
                 st.rerun()
         else:
-            st.success(f"Pertandingan di Room {ms['room_code']} selesai! Skor akhir kamu: {ms['my_points']} poin.")
+            st.success(f"Kamu telah menyelesaikan seluruh soal di Room {active_code}! Klik 'Refresh Skor Teman' untuk melihat skor terbaru temanmu.")
 
-        if ms["history"]:
-            st.markdown("#### Riwayat Ronde Kamu")
-            st.dataframe(pd.DataFrame(ms["history"]), use_container_width=True)
-
-        st.markdown("#### Papan Peringkat Room")
-        board_rows = [{"Pemain": f"{profile['nickname']} (Kamu)", "Skor": ms["my_points"]}]
-        for r_name in ms["rivals"]:
-            board_rows.append({
-                "Pemain": r_name,
-                "Skor": deterministic_room_score(ms["room_code"], r_name, ms["topic"])
+        st.markdown("#### 🏆 Papan Peringkat Live Room")
+        live_rows = []
+        for p_name, p_info in room_data["players"].items():
+            live_rows.append({
+                "Pemain": p_name,
+                "Skor": p_info["score"],
+                "Soal Dijawab": f"{p_info['answered']} / {total_r}",
+                "Status": p_info["status"],
+                "Update Terakhir": p_info["updated_at"]
             })
-        board_df = pd.DataFrame(board_rows).sort_values(by="Skor", ascending=False).reset_index(drop=True)
-        board_df.index = board_df.index + 1
-        st.dataframe(board_df, use_container_width=True)
+        live_df = pd.DataFrame(live_rows).sort_values(by=["Skor", "Update Terakhir"], ascending=[False, True]).reset_index(drop=True)
+        live_df.index = live_df.index + 1
+        st.dataframe(live_df, use_container_width=True)
+
+        if mc["history"]:
+            with st.expander("Lihat Detail Jawabanmu di Room Ini"):
+                st.dataframe(pd.DataFrame(mc["history"]), use_container_width=True)
 
 
 # =====================================================
@@ -1304,14 +1379,14 @@ with tab_tugas:
 
 
 # =====================================================
-# TAB 6: MATERI BACAAN LENGKAP (TANPA LINK RUSAK) & VARIANS
+# TAB 6: MATERI BACAAN LENGKAP & VARIANS
 # =====================================================
 
 with tab_materi:
     st.markdown(
         "<div class='fq-card'><h4>Ruang Baca Materi Akuntansi & Analisis Varians</h4>"
         "<p>Baca seluruh materi akuntansi langsung di dalam aplikasi—termasuk Analisis Laporan Keuangan, Laporan Keuangan Daerah, "
-        "Laporan Keuangan Desa, dan berbagai jenis Laporan Keuangan lainnya—tanpa tautan eksternal yang rusak.</p></div>",
+        "Laporan Keuangan Desa, dan berbagai jenis Laporan Keuangan lainnya.</p></div>",
         unsafe_allow_html=True
     )
 
